@@ -3,7 +3,9 @@
     using System.ComponentModel;
     using System.Windows.Input;
     using GalaSoft.MvvmLight.Command;
+    using Views;
     using Services;
+    using Xamarin.Forms;
 
     public class LoginViewModel : INotifyPropertyChanged 
     {
@@ -122,6 +124,9 @@
             apiService = new ApiService();
             dialogService = new DialogService();
 
+            Email = "jzuluaga55@gmail.com";
+            Password = "123456";
+
             IsEnabled = true;
             IsToggled = true;
         }
@@ -171,16 +176,37 @@
                 Email, 
                 Password);
 
-            if (response == null || string.IsNullOrEmpty(response.AccessToken))
+            if (response == null)
             {
                 IsRunning = false;
                 IsEnabled = true;
-                await dialogService.ShowMessage("Error", response.ErrorDescription);
+                await dialogService.ShowMessage(
+                    "Error", 
+                    "The service is not available, please try latter.");
                 Password = null;
                 return;
             }
 
-            await dialogService.ShowMessage("Taran!!!", "Welcome!!!");
+            if (string.IsNullOrEmpty(response.AccessToken))
+            {
+                IsRunning = false;
+                IsEnabled = true;
+                await dialogService.ShowMessage(
+                    "Error", 
+                    response.ErrorDescription);
+                Password = null;
+                return;
+            }
+
+            var mainViewModel = MainViewModel.GetInstance();
+            mainViewModel.Token = response;
+            mainViewModel.Categories = new CategoriesViewModel();
+            await Application.Current.MainPage.Navigation.PushAsync(
+                new CategoriesView());
+
+            Email = null;
+            Password = null;
+
             IsRunning = false;
             IsEnabled = true;
         }
